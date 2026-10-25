@@ -1,5 +1,4 @@
 
-
 name: Build XiaoZhangBen APK
 
 'on':
@@ -22,30 +21,25 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      
-
-            - name: Install Android SDK
+      - name: Install Android SDK packages
         env:
           ANDROID_HOME: /usr/local/lib/android/sdk
         run: |
-          yes | /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=/usr/local/lib/android/sdk --licenses || true
-          /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=/usr/local/lib/android/sdk "platforms;android-35" "build-tools;35.0.0"
-
-    
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$ANDROID_HOME" --licenses
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$ANDROID_HOME" "platforms;android-35" "build-tools;35.0.0"
 
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
-      - name: Extract project
+      - name: Extract Android project
         run: |
-          ZIP_FILE="$(find . -maxdepth 2 -type f -iname '*.zip' | head -n 1)"
-          test -n "$ZIP_FILE" || { echo "Project ZIP not found"; exit 1; }
+          ZIP_FILE="$(find . -maxdepth 3 -type f -iname '*.zip' | head -n 1)"
+          test -n "$ZIP_FILE" || { echo "Project ZIP not found in repository"; exit 1; }
           mkdir extracted
           unzip -q "$ZIP_FILE" -d extracted
           BUILD_FILE="$(find extracted -type f -path '*/app/build.gradle' | head -n 1)"
-          test -n "$BUILD_FILE" || { echo "Android project not found in ZIP"; exit 1; }
+          test -n "$BUILD_FILE" || { echo "Android project app/build.gradle not found in ZIP"; exit 1; }
           PROJECT_DIR="$(dirname "$(dirname "$BUILD_FILE")")"
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
 
